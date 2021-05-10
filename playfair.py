@@ -62,7 +62,7 @@ def encriptarDesencriptar(tabla, mensaje, c_adicional, encriptar = 1):
   if(c1_pos[0] == c2_pos[0]): # Mover derecha
    c1,c2 = mover_derecha(tabla, len(tabla[0]), c1_pos, c2_pos, encriptar)
   elif(c1_pos[1] == c2_pos[1]): # Mover abajo
-   c1,c2 = mover_derecha(tabla, len(tabla), c1_pos, c2_pos, encriptar)
+   c1,c2 = mover_abajo(tabla, len(tabla), c1_pos, c2_pos, encriptar)
   else: # Mover diagonal
    c1,c2 = mover_diagonal(tabla, c1_pos, c2_pos)
    
@@ -99,8 +99,8 @@ def mover_abajo(tabla, columnas, pos1, pos2, encriptar = 0):
   caracter_1 = tabla[(pos1[0]+1)%columnas][pos1[1]]
   caracter_2 = tabla[(pos2[0]+1)%columnas][pos2[1]]
  else:
-  caracter_1 = tabla[pos1[1]-1][pos1[0]]
-  caracter_2 = tabla[pos2[1]-1][pos2[0]]
+  caracter_1 = tabla[pos1[0]-1][pos1[1]]
+  caracter_2 = tabla[pos2[0]-1][pos2[1]]
  return caracter_1,caracter_2
 
 def mover_diagonal(tabla, pos1, pos2): 
