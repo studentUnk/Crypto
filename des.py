@@ -8,37 +8,22 @@ import random
 import codecs
 
 def encriptar(mensaje,pc_1,pc_2,k_n,p_i,e_b,s_i,p,p_i_inv):
- mensajeEncriptado = ""
- mensajeH = completar64(mensajeHexadecimal(mensaje))
- #mensajeH = hexadecimalBinario(mensaje)
- #print(len(mensajeH))
- #print("Mensaje Hexadecimal = " + mensajeH)
+ mensajeEncriptado = "" # Variable a asignar mensaje codificado
+ mensajeH = completar64(mensajeHexadecimal(mensaje)) # Mensaje en hexadecimal
+ 
  for sm in range(0,len(mensajeH),16):
- #for sm in range(0,len(mensaje),16):
-  #print(len(mensajeH[sm:(sm+16)]))
-  mensajeB = hexadecimalBinario(mensajeH[sm:(sm+16)])
-  #mensajeB = hexadecimalBinario(mensaje)
+  mensajeB = hexadecimalBinario(mensajeH[sm:(sm+16)]) # Segmento hexadecimal en binario
   mensajeEncriptado = mensajeEncriptado + codificarBloques(mensajeB,p_i,e_b,k_n,s_i,p,p_i_inv) # Agregar mensaje codificado al mensaje
- #print("Mensaje Hex = " + mensajeH)
- #mensajeT = hexadecimalASCII(mensajeH)
- #print("Mensaje ASCII = " + mensajeT)
- #mensajeB = hexadecimalBinario(mensajeH)
- #print("Mensaje Bin = " + mensajeB)
- #mensajeH = binarioHexadecimal(mensajeB)
- #print("Mensaje Hex = " + mensajeH)
- #print(len(mensajeB))
+
  return mensajeEncriptado
 
 def desencriptar(mensaje,p_i,e_b,k_n,s_i,p,p_i_inv):
  mensajeDesencriptado = ""
- #mensajeH = mensajeHexadecimal(mensaje)
  mensajeHDesencriptado = "" # Mensaje de hexadecimal a hexadecimal desencriptado
  
  for sm in range(0,len(mensaje),16):
-  mensajeB = hexadecimalBinario(mensaje[sm:(sm+16)])
+  mensajeB = hexadecimalBinario(mensaje[sm:(sm+16)]) # Segmento hexadecimal en binario
   mensajeHDesencriptado = mensajeHDesencriptado + decodificarBloques(mensajeB,p_i,e_b,k_n,s_i,p,p_i_inv) # Agregar mensaje decodificado y en ASCII
- 
- #print("Mensaje Hexadecimal Desencriptado = " + mensajeHDesencriptado)
  
  mensajeDesencriptado = hexadecimalASCII(mensajeHDesencriptado) # Convertir a ASCII
  
@@ -48,7 +33,6 @@ def mensajeHexadecimal(mensaje):
  mensajeH = ""
  for m in mensaje:
   mensajeH = mensajeH + hex(ord(m)).lstrip("0x")
-  #print(mensajeH)
  return mensajeH
 
 def completar64(hexadecimal):
@@ -66,7 +50,7 @@ def completar64(hexadecimal):
  return hexadecimal
 
 '''
- hexadecimal = Mensaje en hexadecimal
+ texto = Mensaje en hexadecimal
  tam = Tamano de la cantidad de binarios que se toman al convertir
 '''
 def hexadecimalBinario(texto, tam = 4):
@@ -91,27 +75,9 @@ def binarioHexadecimal(binario):
   hexadecimal = hexadecimal + formato.format(binarioEntero(binario[i:i+4])) # Convertir binario a hexadecimal y agregar
  return hexadecimal
 
-#def hexadecimalMensaje(hexadecimal):
- #texto = ""
- 
-
 def hexadecimalASCII(hexadecimal):
- texto = ""
- #print("Hexadecimal = " + hexadecimal)
- #bytes_t = bytes.fromhex(hexadecimal) # Convertir a bytes
- #print(bytes_t)
- #texto = texto + bytes_t.decode("ASCII") # Convertir a ASCII
- texto = codecs.decode(hexadecimal,"hex").decode("ascii")
- '''
- for i in range(0,len(hexadecimal),6):
-  bytes_t = bytes.fromhex(hexadecimal[i:i+6]) # Convertir a bytes
-  print(bytes_t)
-  texto = texto + bytes_t.decode("ASCII") # Convertir a ASCII
-  print(texto)
- '''
- return texto
+ return codecs.decode(hexadecimal,"hex").decode("ascii")
  
-
 '''
 tam = Tamano de la clave
 minimo,maximo = Rango de numeros aleatorios
@@ -137,16 +103,10 @@ def crearMatrizOrden(fila,columna,minimo,maximo):
     col = 0 # Buscar primera posicion libre
     while(filaM[col] != -1):
      col = col + 1 # Aumentar posicion
-   #filaM.append(random.randint(minimo,maximo)) # Agregar numero a fila
-   #print("columna " + str(c))
-   #print(filaM)
-   #print(numero)
    filaM[col] = numero # Agregar numero en orden
    numero = numero + 1 # Siguiente numero
-   
    if(numero > maximo):
     numero = minimo
-  #print(filaM)
   matriz.append(filaM) # Agregar fila a la matriz
  return matriz
  
@@ -160,6 +120,40 @@ def crearArregloNumeroNoRepetido(tam, minimo, maximo):
     numero = numero + 1 # Aumentar hasta encontrar un valor inexistente
   arr_n.append(numero) # Agregar numero
  return arr_n 
+
+'''
+Matriz Singular toma en cuenta la cantidad de columnas y se obtiene 
+el valor de la siguiente columna en la misma fila en base al tamano de la matriz
+Matriz de nxn
+columna = Igual a la cantidad de filas y columnas que tendra la matriz
+'''
+def crearMatrizSingular(columna):
+ matriz = [] # Matriz singular
+ minimo = 0 # Valor minimo para asignacion de numeros aleatorios
+ maximo = columna-1 # Valor maximo para asignacion de numeros aleatorios
+ for f in range(0,columna): # Filas
+  multiplo = 0
+  filaM = []
+  
+  numero = random.randint(minimo,maximo)
+  if(encontrarNumeroMatriz(matriz, numero) > -1):
+   numero = 0 # Numero minimo
+   while(encontrarNumeroMatriz(matriz, numero) > -1):
+    numero = numero + 1 # Siguiente numero
+  
+  for i in range(0,columna):
+   filaM.append(-1) # Llenar fila con valores -1 para validar asignacion
+  for c in range(0,columna): # Columnas
+   posicion = random.randint(minimo,maximo) # Posicion a asignar numero
+   if(filaM[posicion] != -1):
+    posicion = 0 # Minima posicion
+    while(filaM[posicion] != -1): # Buscar posicion libre
+     posicion = posicion + 1 # Siguiente posicion
+   filaM[posicion] = multiplo+numero # Asignar numero
+   multiplo = multiplo + columna # Siguiente multiplo
+  
+  matriz.append(filaM) # Agregar fila a matriz
+ return matriz   
   
 
 '''
@@ -201,10 +195,8 @@ def encontrarNumeroFila(fila, numero):
  pos = 0 # Posicion si encuentra numero
  for columna in fila:
   if(numero == columna):
-   #return True
    return pos
   pos = pos + 1
- #return False
  return -1
 
 def encontrarNumeroMatriz(matriz,numero):
@@ -212,10 +204,8 @@ def encontrarNumeroMatriz(matriz,numero):
  for fila in matriz:
   for columna in fila:
    if(numero == columna):
-    #return True
     return pos
    pos = pos + 1
- #return False
  return -1
  
 def xor(b1,b2):
@@ -285,7 +275,8 @@ def permutacionInicial64(defecto = 1):
         [60,52,44,36,28,20,12,4],
         [62,54,46,38,30,22,14,6]]
  else:
-  p_i = crearMatrizNumeroAleatorio(8,8,0,63) # Matriz permutacion 64 bits mxn = 8x8 = 64
+  #p_i = crearMatrizNumeroAleatorio(8,8,0,63) # Matriz permutacion 64 bits mxn = 8x8 = 64
+  p_i = crearMatrizSingular(8) # Crear una matriz de 8x8 que sea singular
  return p_i
  
 def permutacionInicialInv64(defecto = 1):
@@ -300,7 +291,8 @@ def permutacionInicialInv64(defecto = 1):
         [33,1,41,9,49,17,57,25],
         [32,0,40,8,48,16,56,24]]
  else:
-  p_i = crearMatrizNumeroAleatorio(8,8,0,63) # Matriz permutacion 64 bits mxn = 8x8 = 64
+  #p_i = crearMatrizNumeroAleatorio(8,8,0,63) # Matriz permutacion 64 bits mxn = 8x8 = 64
+  p_i = crearMatrizSingular(8) # Crear una matriz singular de 8x8
  return p_i
  
 def tablaSeleccionEBit(defecto = 1):
@@ -316,13 +308,11 @@ def tablaSeleccionEBit(defecto = 1):
          [27,28,29,30,31,0]]
  else:
   e_b = crearMatrizOrden(8,6,0,31) # Matriz con entrada valores de 0-31 (32) y mxn = 8x6 = 48
- #print (e_b)
  return e_b
  
 def ordenarPermutacion(binario, permutacion, tam):
  ordenar = ""
  pos = 0
- #tam = len(binario)
  while(pos < tam):
   ordenar = ordenar + binario[encontrarNumeroMatriz(permutacion,pos)]
   pos = pos + 1
@@ -382,16 +372,12 @@ def cajasS(defecto = 1):
    for f in range(0,fila):
     s_i.append(crearArregloNumeroNoRepetido(columna,minimo,maximo)) # Agregar fila
    si.append(s_i) # Agregar caja
-   #print(s_i)
  return si
 
 def crearSubClaves(clave,pc_1,pc_2):
  claveB = hexadecimalBinario(clave) # Clave en binario
  # En pc_1 solo 56 bits son tomados en cuenta
  clave_pc_1 = ""
- #print("Tam de claveB " + str(len(clave)))
- #print("Clave " + clave)
- #print("Tam de claveB " + str(len(claveB)))
  for f in pc_1: # Filas
   for c in f: # Columnas
    clave_pc_1 = clave_pc_1 + claveB[c] # Establecer nuevo orden binario
@@ -403,11 +389,6 @@ def crearSubClaves(clave,pc_1,pc_2):
  c_0 = clave_pc_1[0:mitad] # Mitad izquierda
  d_0 = clave_pc_1[mitad:len(clave_pc_1)] # Mitad derecha
  
- #print("Clave Binario: " + claveB)
- #print("C_0 = " + c_0)
- #print(len(c_0))
- #print("D_0 = " + d_0)
- 
  c_n = [] # Arreglo de desplazamientos mitad izquierda
  d_n = [] # Arreglo de desplazamientos mitad derecha
  c_n.append(c_0) # Base
@@ -416,23 +397,16 @@ def crearSubClaves(clave,pc_1,pc_2):
  for i in range(0,16):
   c_n.append(desplazarIzquierda(c_n[i],n_desp_izq[i])) # Agregar al arreglo izquierda el desplazamiento en base al anterior
   d_n.append(desplazarIzquierda(d_n[i],n_desp_izq[i])) # Agregar al arreglo derecha el desplazamiento en base al anterior
-  #print("C_" + str(i+1) + " = " + c_n[i+1])
-  #print("D_" + str(i+1) + " = " + d_n[i+1])
  
  k_n = [] # Arreglo con nuevo orden en base a pc_2 y la union de las dos mitades binarias
- #pc_2)
  for i in range(1,17):
   c_d = c_n[i] + d_n[i] # Union de mitades binarias
-  #print("C_D = " + c_d)
   k_t = "" # Fila a agregar a k_n
   for f in pc_2:
    for c in f:
     k_t = k_t + c_d[c] # Agregar caracter segun la posicion en tabla pc_2
-  #for n in pc_2:
-  # k_t = k_t + c_d[n]
   
   k_n.append(k_t) # Agregar fila a k_n
-  #print("K_"+str(i)+" = " + k_n[i-1])
  
  return k_n
  
@@ -472,12 +446,8 @@ def codificarBloques(binario,p_i,e_b,k_n,s_i,p,p_i_inv):
    b_n = xor_k_e[pos_i:pos_i+6] # Dividir binario en subgrupos de tamano 6
    pos_f = binarioEntero(b_n[0] + b_n[5]) # Obtener primer y ultimo caracter y convertir a entero para la fila
    pos_c = binarioEntero(b_n[1:5]) # Obtener valor del medio para la columna
-   #print(pos_f)
-   #print(pos_c)
-   #print(s_i[pos_f])
    s_b = s_b + enteroBinario(s_i[s][pos_f][pos_c]) # Agregar nuevo valor
   #print("S_B = " + s_b)
-  #print("Tam S_B = " + str(len(s_b)))
   f_s_b = "" # Nueva permutacion de 32 bits
   for f in p:
    for c in f:
@@ -493,20 +463,14 @@ def codificarBloques(binario,p_i,e_b,k_n,s_i,p,p_i_inv):
   r_n.append(r_siguiente) # Agregar bloque derecha
  
  binario_p_i_inv = "" # Variable a agregar nueva permutacion
- '''
- for i in range(1,17):
-  reverso = r_n[i]+l_n[i] # Invertir orden de las mitades
-  print("R_L = " + reverso)
- '''
+
  reverso = r_n[16]+l_n[16]
  #print("R_L_16 = " + reverso)
  for f in p_i_inv:
   for c in f:
    binario_p_i_inv = binario_p_i_inv + reverso[c] # Establecer nuevo orden
  #print("IP_Inv = " + binario_p_i_inv)
- #print("Ordnear Inv = " + ordenarPermutacion(binario_p_i_inv,p_i_inv))
  m_hexa = binarioHexadecimal(binario_p_i_inv) # Obtener hexadecimal
- #print("Hexadecimal = " + m_hexa)
  return m_hexa
   
 def decodificarBloques(binario,p_i,e_b,k_n,s_i,p,p_i_inv):
@@ -526,7 +490,6 @@ def decodificarBloques(binario,p_i,e_b,k_n,s_i,p,p_i_inv):
   r_e_b = "" # Expansion de r_0 de 32 a 48 bits en base a e_b
   for f in e_b:
    for c in f:
-    #print(c)
     r_e_b = r_e_b + l_n[pos_l][c] # Reordenar en base a e_b
   
   xor_k_e = ""
@@ -563,42 +526,25 @@ def decodificarBloques(binario,p_i,e_b,k_n,s_i,p,p_i_inv):
  m_binario = ordenarPermutacion(binario_p_i, p_i, len(binario_p_i)) # Reordenar en base a permutacion p_i
  m_hexa = binarioHexadecimal(m_binario) # Obtener hexadecimal
  
- #print(m_hexa)
- 
  return m_hexa
 
   
-
-#mensaje = "Your lips are smoother than vaseline"
-mensaje = "Encripta este mensaje 123456??"
-#print(mensajeHexadecimal(mensaje))
-#print(completar64(mensajeHexadecimal(mensaje)))
-#m = "0123456789ABCDEF"
-#print(hexadecimalBinario(m))
-clave = crearClave()
-claveBinaria = hexadecimalBinario(clave)
-#print(clave)
-#print(claveBinaria)
-matriz1 = crearMatrizNumeroAleatorio(8,7,0,64)
-#print(matriz1)
-#crearSubClaves(clave)
-#k = "133457799BBCDFF1"
-
 # ------------------------------------------------
+# Datos iniciales para encriptar y desencriptar
+mensaje = "Encripta este mensaje 123456??"
+clave = crearClave()
 pc_1 = tablaPermutacion64(0)
 pc_2 = tablaPermutacion48(0)
 k_n = crearSubClaves(clave,pc_1,pc_2)
-p_i = permutacionInicial64()
+p_i = permutacionInicial64(0)
 e_b = tablaSeleccionEBit(0)
 s_i = cajasS(0)
 p = tablaPermutacion32(0)
-p_i_inv = permutacionInicialInv64()
-#codificarBloques(hexadecimalBinario(m),p_i,e_b,k_n,s_i,p,p_i_inv)
+p_i_inv = permutacionInicialInv64(0)
 # ------------------------------------------------
+
 mensajeE = encriptar(mensaje,pc_1,pc_2,k_n,p_i,e_b,s_i,p,p_i_inv)
 print(mensajeE)
 
 mensajeD = desencriptar(mensajeE,p_i,e_b,k_n,s_i,p,p_i_inv)
 print(mensajeD)
-
-#decodificarBloques(hexadecimalBinario(mensajeE),p_i,e_b,k_n,s_i,p,p_i_inv)
