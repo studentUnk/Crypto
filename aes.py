@@ -19,34 +19,39 @@ https://www.angelfire.com/biz7/atleast/mix_columns.pdf
 import random
 import codecs
 
-def encriptar(mensaje,clave,caja_S,rc,matrizMult):
+def encriptar(mensaje,clave,caja_S,rc,matrizMult,expansion=128):
+ # Cantidad de ciclos y tamano de la matriz por defecto (128 bits)
+ ciclo = 10
+ nk = 4
+ maxCaracter = expansion/4 # Cantidad maxima de caracteres para la clave
+ if(expansion == 192):
+  ciclo = 12
+  nk = 6
+ elif(expansion == 256):
+  ciclo = 14
+  nk = 8
  # Texto a hexadecimal
- #mensajeHex = mensajeHexadecimal(texto)
  mensajeHex = completarBits(mensajeHexadecimal(mensaje),32) # 32 = 128 bits
- #mensajeHex = "3243f6a8885a308d313198a2e0370734"
- #mensajeHex = "00112233445566778899aabbccddeeff"
+ #mensajeHex = mensaje # El mensaje ya esta en hexadecimal
  
  #claveHex = mensajeHexadecimal(clave) # La clave ya esta en hexadecimal
  claveHex = clave
- if(len(claveHex) > 32):
-  claveHex = claveHex[0:32]
+ if(len(claveHex) > maxCaracter):
+  claveHex = claveHex[0:int(maxCaracter)]
  else:
-  if(len(claveHex) != 32):
+  if(len(claveHex) != maxCaracter):
+   print(len(claveHex))
+   print(maxCaracter)
    return NULL
- #claveHex="2b7e151628aed2a6abf7158809cf4f3c"
- #claveHex="000102030405060708090a0b0c0d0e0f"
- # ¡¡¡ IMPORTANTE REVISAR TAMANO DEL MENSAJE ANTES DE PASAR A MATRIZ !!!
  # Hexadecimal a matriz 4x4
  #mensajeMatriz = matrizFilaInv(crearMatrizHex(mensajeHex)) # Mensaje en una matriz de 4x4
- claveMatriz = crearMatrizHex(claveHex) # Clave en una matriz de 4x4
- matrizClaves = crearClavesTodas(claveMatriz,rc,caja_S) # Matriz de matrices clave (128=10)
+ claveMatriz = crearMatrizHex(claveHex,nk) # Clave en una matriz de 4x4
+ matrizClaves = crearClavesTodas(claveMatriz,rc,caja_S,ciclo,nk=nk) # Matriz de matrices clave (128=10)
  
  mensajeEncriptado = ""
  for i in range(0,len(mensajeHex),32):
   mensajeMatriz = crearMatrizHex(mensajeHex[i:i+32])
   mensajeEncriptado = mensajeEncriptado + codificacion(mensajeMatriz, matrizClaves, caja_S, matrizMult)
- 
- 
  
  '''
  print("Matriz claves")
@@ -57,28 +62,34 @@ def encriptar(mensaje,clave,caja_S,rc,matrizMult):
  
  return mensajeEncriptado
  
-def desencriptar(mensaje,clave,caja_S,caja_S_inv,rc,matrizMult):
- #claveHex = mensajeHexadecimal(clave) # La clave ya esta en hexadecimal
- claveHex = clave
- if(len(claveHex) > 32):
-  claveHex = claveHex[0:32]
+def desencriptar(mensaje,clave,caja_S,caja_S_inv,rc,matrizMult,expansion=128):
+ # Cantidad de ciclos y tamano de la matriz por defecto (128 bits)
+ ciclo = 10
+ nk = 4
+ maxCaracter = expansion/4 # Cantidad maxima de caracteres para la clave
+ if(expansion == 192):
+  ciclo = 12
+  nk = 6
+ elif(expansion == 256):
+  ciclo = 14
+  nk = 8
+  
+ #claveHex = mensajeHexadecimal(clave) 
+ claveHex = clave # La clave ya esta en hexadecimal
+ if(len(claveHex) > maxCaracter):
+  claveHex = claveHex[0:int(maxCaracter)]
  else:
-  if(len(claveHex) != 32):
+  if(len(claveHex) != maxCaracter):
    return NULL
- #claveHex="000102030405060708090a0b0c0d0e0f"
- claveMatriz = crearMatrizHex(claveHex) # Clave en una matriz de 4x4
- matrizClaves = crearClavesTodas(claveMatriz,rc,caja_S) # Matriz de matrices clave (128=10)
- #print("DESENCRIPTAR")
- '''
- print("Matriz claves")
- for m in matrizClaves:
-  print(m)
- print("------------------")
- '''
+
+ claveMatriz = crearMatrizHex(claveHex,nk) # Clave en una matriz de 4x4
+ matrizClaves = crearClavesTodas(claveMatriz,rc,caja_S,ciclo,nk) # Matriz de matrices clave (128=10)
+ 
  mensajeDesencriptado = ""
  for i in range(0,len(mensaje),32):
   mensajeMatriz = crearMatrizHex(mensaje[i:i+32]) # Mensaje en una matriz de 4x4
   mensajeDesencriptado = mensajeDesencriptado + hexadecimalASCII(decodificacion(mensajeMatriz, matrizClaves, caja_S_inv, matrizMult))
+  #mensajeDesencriptado = mensajeDesencriptado + decodificacion(mensajeMatriz, matrizClaves, caja_S_inv, matrizMult)
   
  return mensajeDesencriptado
 
@@ -104,6 +115,8 @@ def decodificacion(mensajeMatriz, clavesMatriz, caja_S, matrizMult):
   
  #print("Inv Round Key Value")
  #print(matrizEstado)
+ #print(len(clavesMatriz))
+ #print(clavesMatriz[len(clavesMatriz)-1])
  
  # Ciclo de rondas (128 = (9:1))
  for i in range(len(clavesMatriz)-2,0,-1): # La ultima ronda no se aplica multiplicacion
@@ -184,6 +197,7 @@ def decodificacion(mensajeMatriz, clavesMatriz, caja_S, matrizMult):
 def codificacion(mensajeMatriz, clavesMatriz, caja_S, matrizMult):
  # Ronda 0
  matrizEstado = []
+ 
  #print("CODIFICAR")
  #print("Clave")
  #print(clavesMatriz[0])
@@ -192,27 +206,30 @@ def codificacion(mensajeMatriz, clavesMatriz, caja_S, matrizMult):
  #print(mensajeMatriz)
  for i in range(0,len(mensajeMatriz)):
   matrizEstado.append(xorFila(mensajeMatriz[i],clavesMatriz[0][i])) # xor entre mensaje y clave sin ninguna ronda
+ 
+ #print(matrizFilaInv(matrizEstado))
+ 
  #print("Round Key Value")
  #print(clavesMatriz[0])
+ 
  # Ciclo de rondas (128 = (1:10))
  for i in range(1,len(clavesMatriz)-1): # La ultima ronda no se aplica multiplicacion
- #for i in range(1,2): 
   #print("Ronda " + str(i))
-  #print(matrizEstado)
+  #print(matrizFilaInv(matrizEstado))
   
   # Sustitucion por valores en caja_S
   for f in range(0,len(matrizEstado)):
    matrizEstado[f] = sustitucionMatriz(caja_S,matrizEstado[f]) # Sustituir fila
   
   #print("SubBytes")
-  #print(matrizEstado)
+  #print(matrizFilaInv(matrizEstado))
   
   # Desplazar Filas (0,1,2,3)
   for f in range(1,len(matrizEstado)): # En 0 no hay desplazamiento
    matrizEstado[f] = desplazamientoIzquierda(matrizEstado[f],f) # Desplazar 'f' posiciones a la izquierda
   
   #print("ShiftRows")
-  #print(matrizEstado)
+  #print(matrizFilaInv(matrizEstado))
   
   # Mezclar columnas (multiplicacion en base a una matriz fija)
   matrizEstadoT = []
@@ -226,7 +243,6 @@ def codificacion(mensajeMatriz, clavesMatriz, caja_S, matrizMult):
   for f in range(0,len(matrizMult)):
    for c in range(0,len(matrizMult[f])):
     mult = multiplicarFilaColumnaHex(matrizMult,c,matrizEstado,f)
-    #print(mult)
     xorM = ""
     for x in range(0,len(mult[0])):
      xorT = ""
@@ -239,14 +255,9 @@ def codificacion(mensajeMatriz, clavesMatriz, caja_S, matrizMult):
     matrizEstadoT[f][c] = binarioHexadecimal(xorM)
   
   matrizEstado = matrizFilaInv(matrizEstadoT)
+  
   #print("MixColumns")
-  #print(matrizEstado)
-  #print(matrizEstado)
-  #print("STATE")
-  #print(clavesMatriz[i])
-  #print("---")
-  #print("Antes de ronda final")
-  #print(matrizEstado)
+  #print(matrizFilaInv(matrizEstado))
   
   #print("Clave")
   #print(clavesMatriz[i])
@@ -257,10 +268,7 @@ def codificacion(mensajeMatriz, clavesMatriz, caja_S, matrizMult):
   
   #print("Round Key Value")
   #print(matrizFilaInv(matrizEstado))
-  #print(matrizEstado)
-  
-  
- #print("Ronda 10")
+  #print(clavesMatriz[i][f])
  
  # Ronda final
  # Sustitucion por valores en caja_S
@@ -286,15 +294,12 @@ def codificacion(mensajeMatriz, clavesMatriz, caja_S, matrizMult):
  for f in range(0,len(matrizEstado)):
   matrizEstado[f] = xorFila(matrizEstado[f],clavesMatriz[len(clavesMatriz)-1][f]) # Obtener nueva fila
  
- #print("Salida Final")
+ #print("Salida")
  #print(matrizEstado)
+ 
  # Convertir matriz a string
  mensajeCodificado = matrizTexto(matrizFilaInv(matrizEstado))
  return mensajeCodificado  
-
-# -----------------------------------------------------
-# -----------------------------------------------------
-# -----------------------------------------------------
 
 def completarBits(hexadecimal,tam):
  n_hex = tam # Cantidad de hexadecimales por bloque
@@ -343,23 +348,15 @@ def binarioHexadecimal(binario):
  for i in range(0,len(binario),4):
   hexadecimal = hexadecimal + formato.format(binarioEntero(binario[i:i+4])) # Convertir binario a hexadecimal y agregar
  return hexadecimal
-
-def binarioVectorEntero(binario):
- vectorB = [] # Binario como vector entero
- for b in binario:
-  vectorB.append(int(b)) # Agregar al vector string como entero
- return vectorB
  
 # Devuelve multiplicacion en un string binario
 def multiplicarFilaColumnaHex(matriz1,fila,matriz2,columna):
  mult = []
- #print(matriz1[fila])
  for i in range(0,len(matriz1[fila])):
   m1 = hexEntero(matriz1[fila][i]) # Convertir hexadecimal a entero
-  #print(matriz1[fila][i])
   m2 = hexEntero(matriz2[i][columna]) # Convertir hexadecimal a entero
   mr = enteroBinario(m1*m2,8)
-  #if(len(mr)>8):
+  
   if(m1 > 1):
    if(m1==2 or m1==3): # Operacion matematica en G(8)
     m2bin = hexadecimalBinario(matriz2[i][columna])
@@ -398,28 +395,7 @@ def multiplicarFilaColumnaHex(matriz1,fila,matriz2,columna):
       mr = hexadecimalBinario(tablasGalois[j][1][hexEntero(matriz2[i][columna][0])][hexEntero(matriz2[i][columna][1])],4) # Agregar valor segun fila y columna
       #print(tablasGalois[j][1][hexEntero(matriz2[i][columna][0])][hexEntero(matriz2[i][columna][1])])
       break
-   ''' 
-   xorT = ""
-   for j in range(0,len(izbin)):
-    xorT = xorT + xor(izbin[j],xorMult[j])
-   if(m1==3): # Separacion y multiplicacion por bit | se agrega binario (bin*01)
-    xorT2 = ""
-    for j in range(0,len(m2bin)):
-     xorT2 = xorT2 + xor(xorT[j],m2bin[j])
-    xorT = xorT2
-   mr = xorT
-   '''
-   '''
-   xorT = ""
-   print(2*m2)
-   bin1 = enteroBinario(2*m2,8)
-   print(bin1)
-   bin2 = hexadecimalBinario(matriz2[i][columna])
-   print(bin2)
-   for j in range(0,len(bin1)):
-    xorT = xorT + xor(bin1[j],bin2[j])
-   mult.append(xorT)
-   '''
+         
   mult.append(mr)
   #print(matriz2[i][columna])
   
@@ -432,54 +408,72 @@ def matrizTexto(matriz):
   for c in f:
    texto = texto + c # Copiar texto
  return texto
-
-def multiplicarMatrizVector(matriz, vector):
- vectorR = [] # Vector resultado
- for fila in matriz:
-  mult = 0 # Valor inicial
-  pos = 0
-  while(pos < len(fila)):
-   if(pos == 0):
-    mult = fila[pos]*vector[pos] # Multiplicacion
-   else:
-    mult = mult + (fila[pos]*vector[pos]) # Adicion de multiplicacion
-   pos = pos + 1 # Siguiente posicion
-  vectorR.append(mult) # Agregar resultado
- return vectorR  
  
 def xor(b1,b2):
  if(b1 != b2):
   return "1"
  return "0" 
  
-def crearClavesTodas(matrizClave,rc,caja_S):
- matriz = []
- #matriz.append(matrizFilaInv(matrizClave)) # Agregar primera matriz
- matriz.append(matrizClave)
- for i in range(1,11):
+def crearClavesTodas(matrizClave,rc,caja_S,ciclo=10,nk=4):
+ matriz = [] # Todos los ciclos de la clave
+ filasMatriz = [] # Todas las filas
+ for f in matrizClave:
+  filasMatriz.append(f) # Agregar fila
+ for i in range(1,ciclo+1):
   filaT = []
-  for c in matriz[i-1][len(matrizClave)-1]:
+  for c in filasMatriz[-1]:
    filaT.append(c) # Agregar columna
+   
   filaT = desplazamientoIzquierda(filaT,1)
   filaT = sustitucionMatriz(caja_S, filaT)
-  #matriz[3] = 
   filaT[0] = agregar_rc(filaT[0], rc[i-1])
-  #print(matrizT)
-  #print(matrizS[2])
-  #print(matriz[i-1][3])
+  
   matrizS = []
-  matrizS.append(xorFila(matriz[i-1][0],filaT)) # Primera fila
-  matrizS.append(xorFila(matrizS[0],matriz[i-1][1])) # Segunda fila
-  matrizS.append(xorFila(matrizS[1],matriz[i-1][2])) # Tercera fila
-  #print(matrizS[2])
-  matrizS.append(xorFila(matrizS[2],matriz[i-1][3])) # Cuarta fila
-  #print (matrizS)
-  #matrizFilaInv(matrizS)
-  matriz.append(matrizS)
- #print(matriz)
+  matrizS.append(xorFila(filasMatriz[(i-1)*nk],filaT)) # Primera fila
+  filasMatriz.append(matrizS[0]) # Agregar primera fila
+
+  if(nk != 8): # 128 - 192 bits
+   for j in range(1,nk):
+    matrizS.append(xorFila(matrizS[j-1],filasMatriz[((i-1)*nk)+j])) # Fila n
+    filasMatriz.append(matrizS[j]) # N filas siguientes
+  else: # 256 bits   
+   for j in range(1,int(nk/2)): # Primeros 3 ciclos
+    matrizS.append(xorFila(matrizS[j-1],filasMatriz[((i-1)*nk)+j])) # Fila n
+    filasMatriz.append(matrizS[j]) # N filas siguientes
+    
+   matrizS = [] # Vaciar elemento
+   # Sustitucion por matriz a la fila inmediatamente anterior
+   filaT = sustitucionMatriz(caja_S, filasMatriz[-1])
+   matrizS.append(xorFila(filasMatriz[((i-1)*nk)+(int(nk/2))],filaT)) # Primera fila
+   filasMatriz.append(matrizS[0])
+   
+   # Se mantiene la misma logica que en ciclo anterior
+   for j in range(1,int(nk/2)): # Finales 3 ciclos
+    matrizS.append(xorFila(matrizS[j-1],filasMatriz[((i-1)*nk)+j+int(nk/2)])) # Segunda fila
+    filasMatriz.append(matrizS[j]) # N filas siguientes
+  
+ posF = 0 # Fila actual a agregar
+ for i in range(0,ciclo+1):
+  matrizTemp = [] # Matriz temporal
+  for j in range(0,4):
+   matrizTemp.append(filasMatriz[posF]) # Agregar fila a matriz
+   posF = posF + 1 # Siguiente fila
+  matriz.append(matrizTemp) # Agregar matriz de ciclo a conjunto matricial
+ 
+ '''
+ pos = 0
+ for m in matriz:
+  for f in m:
+   print (pos)
+   print (f)
+   pos = pos + 1
+ '''
+ 
  for i in range(0,len(matriz)): # Invertir filas a columnas
   matriz[i] = matrizFilaInv(matriz[i])
- #matriz[0] = matrizFilaInv(matrizClave) # Ajustar 
+ #matriz[0] = matrizFilaInv(matrizClave) # Ajustar
+ 
+   
  return matriz # Matriz con todas las claves
 
 def xorFila(fila1, fila2):
@@ -504,21 +498,17 @@ def matrizFilaInv(matriz):
  #print(matrizN)
  return matrizN
 
-def crearMatrizHex(claveHex):
+def crearMatrizHex(claveHex,nk=4):
  matrizByte = []
- #for i in range(0, len(claveHex),8): # 4 hexadecimales (tam=32) por fila
  pos = 0 # Posicion de copia de caracteres
  maximo = len(claveHex)
- while(pos < maximo):
+ while(pos < maximo): # Crear matriz segun el maximo de caracteres
   fila = []
   for j in range(0, 4):
    fila.append(claveHex[pos:pos+2]) # Agregar hexadecimal
    pos = pos + 2 # Siguiente valor de caracteres
   matrizByte.append(fila) # Agregar fila
- #print (matrizByte)
- 
- #print(desplazamientoIzquierda(matrizByte, 3, 1))
- 
+ #print (matrizByte) 
  return matrizByte
 
 def crearClave(tam = 16,minimo = 0, maximo = 15):
@@ -528,18 +518,6 @@ def crearClave(tam = 16,minimo = 0, maximo = 15):
   #clave = clave + hex(random.randint(minimo,maximo)).lstrip("0x")
   clave = clave + "{0:x}".format(numero)
  return clave
-
-def claveCircular(claveHex):
- byteClave = []
- byteClaveS = []
- for i in range(0,len(claveHex),8): # Para una clave de 128 bits
-  byteClave.append(claveHex[i:(i+8)]) # Separar por grupos de 8 bits
-  byteClaveS.append(-1) # Llenar con -1 para luego reasignar
- print("claves")
- print(byteClave)
- byteClaveS[0] = desplazamientoIzquierda(byteClave[3])
- print(byteClaveS)
- #return byteClaveS 
 
 def sustitucionMatriz(caja_S, fila):
  sus = [] # Nueva fila a agregar
@@ -553,58 +531,12 @@ def sustitucionMatriz(caja_S, fila):
 def agregar_rc(hexadecimal, rc):
  binarioH = hexadecimalBinario(hexadecimal,4)
  binarioR = hexadecimalBinario(rc,4)
- #print(binarioH)
- #print(binarioR)
+ #print(binarioH + " " + binarioR)
  resultado = ""
  for i in range(0,len(binarioH)):
   resultado = resultado + xor(binarioH[i],binarioR[i])
  #print(resultado)
  return binarioHexadecimal(resultado)
-
-# Round constant
-def crear_rc(tam):
- rc = [] # constante circular por ciclo
- p = 1 # Primer valor
- prev = 0 # valor previo
- num = hexadecimalBinario("11",4)
- print(num)
- for i in range(0,tam): # 10=128 | 12=192 | 14=256
-  fila = [] # Fila a agregar a rc
-  binario = ""
-  prev = p
-  if(i > 0):
-   p = p*2
-   print(p)
-   binario = enteroBinario(p,8)
-   print(binario)
-   if(p > 128): # Limite es 80 en hexadecimal
-    nuevoB = ""
-    for j in range(0,len(binario)):
-     nuevoB = nuevoB + xor(binario[j],num[j])
-    binario = nuevoB
-    p = binarioEntero(binario)
-    print("nu")
-    print(p)
-  print(binarioHexadecimal(binario))
-  fila.append(binarioHexadecimal(binario)) # Agregar rc de iteracion
-  for j in range(0,3):
-   fila.append("00") # Agregar hexadecimal 00
-  rc.append(fila)
- print(rc)
- return rc
-
-def caja_S():
- matrizS = [[1,0,0,0,1,1,1,1], 
- 	    [1,1,0,0,0,1,1,1],
- 	    [1,1,1,0,0,0,1,1],
- 	    [1,1,1,1,0,0,0,1],
- 	    [1,1,1,1,1,0,0,0],
- 	    [0,1,1,1,1,1,0,0],
- 	    [0,0,1,1,1,1,1,0],
- 	    [0,0,0,1,1,1,1,1]]
- vectorS = [1,1,0,0,0,1,1,0]
- vectorB = binarioVectorEntero("11111111")
- print(multiplicarMatrizVector(matrizS,vectorB))
 
 def desplazamientoDerecha(fila,desp):
  for i in range(0,desp): # Cantidad de desplazamientos a realizar
@@ -615,17 +547,8 @@ def desplazamientoDerecha(fila,desp):
  return fila  
 
 def desplazamientoIzquierda(fila, desp):
- '''despHexa = "" # Nuevo hexadecimal
- pos = 2 # Posicion inicial
- while(len(despHexa) < 8):
-  if(pos == len(hexadecimal)):
-   pos = 0 # Agregar posiciones iniciales
-  despHexa = despHexa + hexadecimal[pos] # Agregar caracter
-  pos = pos + 1 # Siguiente posicion
- return despHexa'''
  for i in range(0,desp): # Cantidad de desplazamientos a realizar
-  #primer = matriz[fila][0]
-  primer = fila[0]
+  primer = fila[0] # Primer elemento
   for j in range(0,len(fila)-1): # Cantidad de elementos en fila menos uno
    fila[j] = fila[j+1] # Desplazar posiciones
   fila[len(fila)-1] = primer # Agregar elemento eliminado
@@ -652,7 +575,10 @@ caja_S_sustitucion = [
 ['e1','f8','98','11','69','d9','8e','94','9b','1e','87','e9','ce','55','28','df'],
 ['8c','a1','89','0d','bf','e6','42','68','41','99','2d','0f','b0','54','bb','16']
 ]
-rc = ['01','02','04','08','10','20','40','80','1b','36']
+# conteo circular (round count)
+rc = ['01','02','04','08','10','20','40','80','1b','36', # 128 bits
+      '6c','d8','ab','4d','9a','2f','5e','bc','63','c6','97','35','6a','d4','b3','7d','fa','ef','c5'] # 256 bits
+
 matrizMult = [
 ['02','03','01','01'],
 ['01','02','03','01'],
@@ -678,6 +604,7 @@ caja_S_sustitucion_inv = [
 ['a0','e0','3b','4d','ae','2a','f5','b0','c8','eb','bb','3c','83','53','99','61'],
 ['17','2b','04','7e','ba','77','d6','26','e1','69','14','63','55','21','0c','7d']
 ]
+
 matrizMultInv = [
 ['0e','0b','0d','09'],
 ['09','0e','0b','0d'],
@@ -795,41 +722,30 @@ tablasGalois = [
 ['d7','d9','cb','c5','ef','e1','f3','fd','a7','a9','bb','b5','9f','91','83','8d']
 ]]]
 
-clave = crearClave(32)
+expansion = 256
+if(expansion == 128):
+ clave = crearClave(32) # 128 bits
+elif(expansion == 192):
+ clave = crearClave(48) # 192 bits
+elif(expansion == 256):
+ clave = crearClave(64) # 256 bits
+
+#clave = "2b7e151628aed2a6abf7158809cf4f3c"
+#clave = "8e73b0f7da0e6452c810f32b809079e562f8ead2522c6b7b"
+#clave = "000102030405060708090a0b0c0d0e0f1011121314151617"
+#clave = "603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4"
+#clave = "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f"
 mensaje = "Encripta este mensaje 123456??"
+#mensaje = "00112233445566778899aabbccddeeff"
+
 # ------------------------------------------------
-
-#clave = "Thats my Kung Fu"
-#claveHex = mensajeHexadecimal(clave)
-#clavehex="2b7e151628aed2a6abf7158809cf4f3c"
-#print("Clave en Hex: " + claveHex)
-#texto = "Two One Nine Two"
-#textoHex = mensajeHexadecimal(texto)
-
-
-#print("Texto en Hex: " + textoHex)
-#claveCircular(claveHex)
-#matriz = crearMatrizHex(clavehex)
-#matriz[3] = desplazamientoIzquierda(matriz[3],1)
-#matriz[3] = sustitucionMatriz(caja_S_sustitucion, matriz[3])
-#matriz[3] = 
-#matriz[3][0] = agregar_rc(matriz[3][0], rc[0])
-#print(matriz)
-#claveM = crearClavesTodas(matriz,rc,caja_S_sustitucion)
-#for m in claveM:
-# print(m)
-#claveMInv = crearClavesTodas(matriz,rc,caja_S_sustitucion_inv)
-
-#caja_S()
-#print(enteroBinario(16,8))
-#crear_rc(10)
 
 print("Mensaje en texto plano = " + mensaje)
 print("Clave = " + clave)
 
-mensajeEncriptado = encriptar(mensaje,clave,caja_S_sustitucion,rc,matrizMult)
+mensajeEncriptado = encriptar(mensaje,clave,caja_S_sustitucion,rc,matrizMult,expansion)
 print("Mensaje encriptado = " + mensajeEncriptado)
 
-mensajeDesencriptado = desencriptar(mensajeEncriptado,clave,caja_S_sustitucion,caja_S_sustitucion_inv,rc,matrizMultInv)
+mensajeDesencriptado = desencriptar(mensajeEncriptado,clave,caja_S_sustitucion,caja_S_sustitucion_inv,rc,matrizMultInv,expansion)
 print("Mensaje desencriptado = " + mensajeDesencriptado)
 
